@@ -1,17 +1,14 @@
-require("dotenv").config();
-const app = require("./src/app");
-const connectDB = require("./src/db/db");
+import dotenv from "dotenv";
+dotenv.config();
+import app from "./src/app.js";
+import connectDB from "./src/db/db.js";
 
-connectDB();
+connectDB()
 
-PORT = process.env.PORT;
+const PORT = process.env.PORT;
 
 app.get("/", (req, res) => {
   res.send("Hello World");
-});
-
-app.get("/login", (req, res) => {
-  res.send("login page");
 });
 
 app.listen(PORT || 3000, () => {

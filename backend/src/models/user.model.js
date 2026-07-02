@@ -1,35 +1,53 @@
-const mongoose = require("mongoose")
+import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
     {
-        email:{
+        email: {
             type: String,
-            required: true,
-            unique: true
+            required: [true, "Email is required"],
+            unique: true,
+            lowercase: true,
+            trim: true,
         },
-        username:{
+        username: {
             type: String,
-            required: true,
-            unique: true
+            required: [true, "Username is required"],
+            unique: true,
+            lowercase: true,
+            trim: true,
+            index: true,
         },
-        password:{
+        password: {
             type: String,
-            required: true
+            required: [true, "Password is required"],
         },
-        dob:{
+        dob: {
             type: Date,
-            required: true
+            required: [true, "Date of birth is required"],
         },
-        gender:{
+        gender: {
             type: String,
-            required: true
-        }
+            enum: ["male", "female", "other", "prefer-not-to-say"],
+            required: [true, "Gender selection is required"],
+        },
+        profilePic: {
+            type: String, // cloudinary url
+            default:
+                "https://res.cloudinary.com/your-cloud/image/upload/default-avatar.png",
+        },
+        blocked: { 
+            type: Boolean,
+            default: false,
+        },
+        refreshToken: {
+            type: String,
+        },
     },
     {
-        timestamps: true
-    }
+        timestamps: true,
+    },
 );
 
-const UserModel = mongoose.model("User", userSchema);
+const User = mongoose.model("User", userSchema);
 
-module.exports = UserModel;
+export default User;

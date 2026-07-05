@@ -32,10 +32,10 @@ const userSchema = new mongoose.Schema(
             enum: ["male", "female", "other", "prefer-not-to-say"],
             required: [true, "Gender selection is required"],
         },
-        profilePic: {
+        avatar: {
             type: String, // cloudinary url
             default:
-                "https://res.cloudinary.com/your-cloud/image/upload/default-avatar.png",
+                "/defaultprofilepic.jpg",
         },
         blocked: { 
             type: Boolean,
@@ -52,7 +52,7 @@ const userSchema = new mongoose.Schema(
 
 userSchema.pre("save", async function (next) {
     if(!this.isModified("password")) return next()
-    this.password = bcrypt.hash(this.password,10)
+    this.password = await bcrypt.hash(this.password,10)
     next()
 })
 

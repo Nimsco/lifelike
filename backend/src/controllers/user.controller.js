@@ -30,19 +30,21 @@ const registerUser = asyncHandler(async (req, res) => {
     if (!email.includes("@"))
         throw new ApiError(400, "Email must contain @ symbol");
 
-    const userExists = User.findOne({
+    if (password.length <= 4)
+        throw new ApiError(400, "Password must be at least 4 characters long.");
+
+    const userExists = await User.findOne({
         $or: [{ username }, { email }],
     });
 
     if (userExists) throw new ApiError(409, "User already exists");
 
-    const avatarLocalPath = req.files?.avatar[0]?.path;
+    let avatarUrl = null;
 
-    if (avatarLocalPath) throw new ApiError(400, "Avatar is required");
-
-    const avatar = await uploadOnCloudinary(avatarLocalPath);
-
-    if (!avatar) throw new ApiError(400, "Avatar is required");
+    if (req.body?.path) {
+        const avatar = await uploadOnCloudinary(req.file.path);
+        avatarUrl = avatar.secure_url;
+    }
 
     const user = await User.create({
         email: email.toLowerCase(),
@@ -50,7 +52,7 @@ const registerUser = asyncHandler(async (req, res) => {
         password,
         dob,
         gender,
-        avatar: avatar.url,
+        avatar: avatarUrl,
     });
 
     const createdUser = await User.findById(user._id).select(
@@ -60,10 +62,11 @@ const registerUser = asyncHandler(async (req, res) => {
     if (!createdUser)
         throw new ApiError(500, "Something went wrong while registering user");
 
-    return res.status(201).json(
-        new ApiResponse(201, createdUser, "User registered successfully")
-    )
+    return res
+        .status(201)
+        .json(
+            new ApiResponse(201, createdUser, "User registered successfully"),
+        );
 });
-
 
 export { registerUser };

@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2"
+import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 
 const postSchema = new mongoose.Schema(
     {
@@ -27,16 +27,16 @@ const postSchema = new mongoose.Schema(
                 ref: "User",
             },
         ],
-        isPublished:{
-            type:Boolean,
-            default : true
-        }
+        isPublished: {
+            type: Boolean,
+            default: true,
+        },
     },
     {
         timestamps: true,
     },
 );
 
-const Post = mongoose.model("Post",postSchema)
+const Post = mongoose.model("Post", postSchema);
 
-export default Post
+export default Post;

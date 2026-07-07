@@ -38,8 +38,14 @@ const userSchema = new mongoose.Schema(
             maxlength: [100, "Bio cannot be longer than 100 characters"],
         },
         avatar: {
-            type: String, // cloudinary url
-            default: null,
+            url: {
+                type: String,
+                default: null,
+            },
+            public_id: {
+                type: String,
+                default: null,
+            },
         },
         blocked: {
             type: Boolean,

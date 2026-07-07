@@ -4,7 +4,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import jwt from "jsonwebtoken";
-import fs from "fs"
+import fs from "fs";
 
 const generateAccessAndRefreshTokens = async (userId) => {
     try {
@@ -37,7 +37,7 @@ const registerUser = asyncHandler(async (req, res) => {
     //send response : remove password and refresh token
     //check for user creation
 
-    const { email, username, password, dob, gender } = req.body;
+    const { email, username, password, dob, gender, bio } = req.body;
 
     if (
         [email, username, password, dob, gender].some(
@@ -47,53 +47,67 @@ const registerUser = asyncHandler(async (req, res) => {
         throw new ApiError(400, "All fields are required");
     }
 
+    if (bio.trim().length > 100)
+        throw new ApiError(400, "Bio cannot exceed 100 characters.");
+
     if (!email.includes("@"))
         throw new ApiError(400, "Email must contain @ symbol");
 
     if (password.length <= 4)
-        throw new ApiError(400, "Password must be at least 4 characters long.");
+        throw new ApiError(400, "Password must be at least 5 characters long.");
 
-try {
+    try {
         const userExists = await User.findOne({
             $or: [{ username }, { email }],
         });
-    
+
         if (userExists) throw new ApiError(409, "User already exists");
-    
+
         let avatarUrl = null;
-    
+
         if (req.file?.path) {
             const avatar = await uploadOnCloudinary(req.file.path);
             avatarUrl = avatar.secure_url;
         }
-    
+
         const user = await User.create({
             email: email.toLowerCase(),
             username: username.toLowerCase(),
             password,
             dob,
             gender,
+            bio,
             avatar: avatarUrl,
         });
-    
+
         const createdUser = await User.findById(user._id).select(
             "-password -refreshToken",
         );
-    
+
         if (!createdUser)
-            throw new ApiError(500, "Something went wrong while registering user");
-    
+            throw new ApiError(
+                500,
+                "Something went wrong while registering user",
+            );
+
         return res
             .status(201)
             .json(
-                new ApiResponse(201, createdUser, "User registered successfully"),
+                new ApiResponse(
+                    201,
+                    createdUser,
+                    "User registered successfully",
+                ),
             );
-} catch (error) {
-    if (req.file?.path && fs.existsSync(req.file.path)){
-        fs.unlinkSync(req.file.path)
+    } catch (error) {
+        if (req.file?.path && fs.existsSync(req.file.path)) {
+            fs.unlinkSync(req.file.path);
+        }
+        throw new ApiError(
+            error?.statusCode || 500,
+            error?.message || "Something went wrong while registering user",
+        );
     }
-    throw new ApiError(error.statusCode || 500, error?.message || "Something went wrong while registering user")
-}
 });
 
 const loginUser = asyncHandler(async (req, res) => {
@@ -214,4 +228,93 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     }
 });
 
-export { registerUser, loginUser, logoutUser, refreshAccessToken };
+const changeCurrentPassword = asyncHandler(async (req, res) => {
+    const { oldPassword, newPassword, confirmPassword } = req.body;
+
+    if (!newPassword?.trim())
+        throw new ApiError(400, "New password is required");
+
+    if (newPassword.length <= 4)
+        throw new ApiError(400, "Password must be at least 5 characters long.");
+
+    if (newPassword !== confirmPassword)
+        throw new ApiError(
+            400,
+            "The confirm password field does not match the new password.",
+        );
+
+    const user = await User.findById(req.user?._id);
+    const isPasswordCorrect = await user.isPasswordCorrect(oldPassword);
+
+    if (!isPasswordCorrect) throw new ApiError(400, "Invalid old password");
+
+    user.password = newPassword;
+
+    await user.save({ validateBeforeSave: false });
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, {}, "Password changed successfully"));
+});
+
+const getCurrentUser = asyncHandler(async (req, res) => {
+    return res
+        .status(200)
+        .json(new ApiResponse(200, req.user, "User successfully fetched"));
+});
+
+const updateAccountDetails = asyncHandler(async (req, res) => {
+    const { bio } = req.body;
+    if (!bio) throw new ApiError(400, "All fields are required.");
+
+    const user = await User.findByIdAndUpdate(
+        req.user?._id,
+        {
+            $set: {
+                bio,
+            },
+        },
+        { new: true },
+    ).select("-password");
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(200, user, "Account details updated successfully"),
+        );
+});
+
+const updateUserAvatar = asyncHandler(async (req, res) => {
+    const avatarLocalPath = req.file?.path;
+    if (!avatarLocalPath) throw new ApiError(400, "Avatar file is missing.");
+
+    const avatar = await uploadOnCloudinary(avatarLocalPath);
+
+    if (!avatar.secure_url)
+        throw new ApiError(400, "Error while uploading on avatar.");
+
+    const user = await User.findByIdAndUpdate(
+        req.user?._id,
+        {
+            $set: {
+                avatar: avatar.secure_url,
+            },
+        },
+        { new: true },
+    ).select("-password");
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, user, "Avatar updated successfully."));
+});
+
+export {
+    registerUser,
+    loginUser,
+    logoutUser,
+    refreshAccessToken,
+    changeCurrentPassword,
+    getCurrentUser,
+    updateAccountDetails,
+    updateUserAvatar,
+};

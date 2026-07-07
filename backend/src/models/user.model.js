@@ -32,12 +32,11 @@ const userSchema = new mongoose.Schema(
             enum: ["male", "female", "other", "prefer-not-to-say"],
             required: [true, "Gender selection is required"],
         },
-        posts: [
-            {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: "Post",
-            },
-        ],
+        bio: {
+            type: String,
+            trim: true,
+            maxlength: [100, "Bio cannot be longer than 100 characters"],
+        },
         avatar: {
             type: String, // cloudinary url
             default: null,

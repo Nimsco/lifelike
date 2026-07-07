@@ -2,7 +2,10 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { User } from "../models/user.model.js";
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import {
+    uploadOnCloudinary,
+    deleteFromCloudinary,
+} from "../utils/cloudinary.js";
 import jwt from "jsonwebtoken";
 import fs from "fs";
 
@@ -77,7 +80,10 @@ const registerUser = asyncHandler(async (req, res) => {
             dob,
             gender,
             bio,
-            avatar: avatarUrl,
+            avatar: {
+                url: avatar.secure_url,
+                public_id: avatar.public_id,
+            },
         });
 
         const createdUser = await User.findById(user._id).select(
@@ -287,17 +293,25 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
 const updateUserAvatar = asyncHandler(async (req, res) => {
     const avatarLocalPath = req.file?.path;
     if (!avatarLocalPath) throw new ApiError(400, "Avatar file is missing.");
+    const prevAvatarId = req.user?.avatar.public_id;
 
     const avatar = await uploadOnCloudinary(avatarLocalPath);
 
     if (!avatar.secure_url)
         throw new ApiError(400, "Error while uploading on avatar.");
 
+    if (prevAvatarId) {
+        await deleteFromCloudinary(prevAvatarId);
+    }
+
     const user = await User.findByIdAndUpdate(
         req.user?._id,
         {
             $set: {
-                avatar: avatar.secure_url,
+                avatar: {
+                    url: avatar.secure_url,
+                    public_id: avatar.public_id,
+                },
             },
         },
         { new: true },

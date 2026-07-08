@@ -1,1 +1,172 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
 @import "tailwindcss";
+
+@theme {
+    --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+
+    --color-primary: #6f91c2;
+    --color-primary-hover: #5c7fae;
+    --color-heading: #494a4c;
+    --color-body: #555555;
+    --color-muted: #8e8e8e;
+    --color-page: #f0f2f5;
+    --color-card: #ffffff;
+    --color-border: #dbdbdb;
+    --color-input-bg: #fafafa;
+    --color-green: #42b72a;
+    --color-green-hover: #36a420;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-sans);
+    background-color: var(--color-page);
+    color: var(--color-body);
+    margin: 0;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+    background-color: rgba(111, 145, 194, 0.25);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Floating Label – animated (for text / email / password / textarea)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.float-label {
+    position: relative;
+}
+
+.float-label input,
+.float-label textarea {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    border: 1px solid var(--color-border);
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--color-heading);
+    background: var(--color-input-bg);
+    outline: none;
+    transition: border-color 0.2s ease;
+    font-family: inherit;
+}
+
+.float-label textarea {
+    resize: none;
+}
+
+.float-label input::placeholder,
+.float-label textarea::placeholder {
+    color: transparent;
+}
+
+.float-label input:focus,
+.float-label textarea:focus {
+    border-color: var(--color-primary);
+}
+
+/* Label – resting (inside the field) */
+.float-label > input + label {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-muted);
+    font-size: 0.875rem;
+    pointer-events: none;
+    transition: all 0.2s ease;
+    padding: 0 0.25rem;
+    background: transparent;
+}
+
+.float-label > textarea + label {
+    position: absolute;
+    left: 0.75rem;
+    top: 0.9rem;
+    color: var(--color-muted);
+    font-size: 0.875rem;
+    pointer-events: none;
+    transition: all 0.2s ease;
+    padding: 0 0.25rem;
+    background: transparent;
+}
+
+/* Label – floated (sits on the border) */
+.float-label > input:focus + label,
+.float-label > input:not(:placeholder-shown) + label,
+.float-label > textarea:focus + label,
+.float-label > textarea:not(:placeholder-shown) + label {
+    top: 0;
+    transform: translateY(-50%);
+    font-size: 0.7rem;
+    color: var(--color-primary);
+    font-weight: 500;
+    background: var(--color-card);
+    letter-spacing: 0.01em;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Always-floated Label (for date / select — no :placeholder-shown support)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.float-label-static {
+    position: relative;
+}
+
+.float-label-static label {
+    position: absolute;
+    left: 0.75rem;
+    top: 0;
+    transform: translateY(-50%);
+    font-size: 0.7rem;
+    color: var(--color-primary);
+    font-weight: 500;
+    background: var(--color-card);
+    padding: 0 0.25rem;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.float-label-static input,
+.float-label-static select {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    border: 1px solid var(--color-border);
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--color-heading);
+    background: var(--color-input-bg);
+    outline: none;
+    transition: border-color 0.2s ease;
+    font-family: inherit;
+}
+
+.float-label-static input[type="date"] {
+    color-scheme: light;
+}
+
+.float-label-static select {
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+    padding-right: 2.5rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238e8e8e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1rem;
+}
+
+.float-label-static select option {
+    background: white;
+    color: var(--color-heading);
+}
+
+.float-label-static input:focus,
+.float-label-static select:focus {
+    border-color: var(--color-primary);
+}

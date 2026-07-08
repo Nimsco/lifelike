@@ -75,7 +75,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
         const user = await User.create({
             email: email.toLowerCase(),
-            username: username.toLowerCase(),
+            username,
             password,
             dob,
             gender,
@@ -322,6 +322,135 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, user, "Avatar updated successfully."));
 });
 
+const getUserProfile = asyncHandler(async (req, res) => {
+    const { username } = req.params;
+
+    if (!username?.trim()) throw new ApiError(400, "Username is missing");
+
+    const profile = await User.aggregate([
+        {
+            $match: {
+                username: username,
+            },
+        },
+        {
+            $lookup: {
+                from: "follows",
+                localField: "_id",
+                foreignField: "following",
+                as: "followers", //gives the followers of users
+            },
+        },
+        {
+            $lookup: {
+                from: "follows",
+                localField: "_id",
+                foreignField: "follower",
+                as: "following", //gives the users the user is following to
+            },
+        },
+        {
+            $lookup: {
+                from: "posts",
+                localField: "_id",
+                foreignField: "author",
+                as: "userPosts",
+            },
+        },
+        {
+            $addFields: {
+                followersCount: {
+                    $size: "$followers",
+                },
+                followingCount: {
+                    $size: "$following",
+                },
+                numberOfPosts: {
+                    $size: "$userPosts",
+                },
+                isFollowed: {
+                    $cond: {
+                        if: { $in: [req.user?._id, "$followers.follower"] },
+                        then: true,
+                        else: false,
+                    },
+                },
+            },
+        },
+        {
+            $project: {
+                username: 1,
+                followersCount: 1,
+                followingCount: 1,
+                numberOfPosts: 1,
+                isFollowed: 1,
+                avatar: 1,
+                createdAt: 1,
+            },
+        },
+    ]);
+
+    if (!profile?.length) throw new ApiError(404, "User does not exist.");
+    console.log(profile);
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, profile[0], "User fetched successfully."));
+});
+
+const getPostWatchHistory = asyncHandler(async (req, res) => {
+    const user = await User.aggregate([
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(req.user?._id),
+            },
+        },
+        {
+            $lookup: {
+                from: "posts",
+                localField: "postWatchHistory",
+                foreignField: "_id",
+                as: "postWatchHistory",
+                pipeline: [
+                    {
+                        $lookup: {
+                            from: "users",
+                            localField: "author",
+                            foreignField: "_id",
+                            as: "author",
+                            pipeline: [
+                                {
+                                    $project: {
+                                        username: 1,
+                                        avatar: 1,
+                                    },
+                                },
+                            ],
+                        },
+                    },
+                    {
+                        $addFields: {
+                            author: {
+                                $first: "$owner",
+                            },
+                        },
+                    },
+                ],
+            },
+        },
+    ]);
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                user[0].postWatchHistory,
+                "User post watch history fetched successfully.",
+            ),
+        );
+});
+
 export {
     registerUser,
     loginUser,
@@ -331,4 +460,6 @@ export {
     getCurrentUser,
     updateAccountDetails,
     updateUserAvatar,
+    getUserProfile,
+    getPostWatchHistory,
 };

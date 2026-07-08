@@ -1,9 +1,10 @@
 import mongoose from "mongoose";
 
 const followSchema = new mongoose.Schema(
+    //use indexes later
     {
         follower: {
-            type: mongoose.Schema.Types.ObjectId, //one who is following
+            type: mongoose.Schema.Types.ObjectId, //one who is following the user
             ref: "User",
         },
         following: {

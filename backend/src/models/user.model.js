@@ -15,7 +15,6 @@ const userSchema = new mongoose.Schema(
             type: String,
             required: [true, "Username is required"],
             unique: true,
-            lowercase: true,
             trim: true,
             index: true,
         },
@@ -47,6 +46,12 @@ const userSchema = new mongoose.Schema(
                 default: null,
             },
         },
+        postWatchHistory: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "Post",
+            },
+        ],
         blocked: {
             type: Boolean,
             default: false,
